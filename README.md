@@ -10,6 +10,14 @@ image_processing:
     - entity_id: camera.local_file_1
 ```
 
+You can create an [MQTT camera](https://www.home-assistant.io/integrations/camera.mqtt) to monitor the feed by subscribing to the same topic:
+```
+camera:
+  - platform: mqtt
+    topic: hass_camera_1
+    name: mqtt_camera_1
+```
+
 
 ## Dev references
 - https://github.com/home-assistant/core/blob/dev/homeassistant/components/mqtt_eventstream/__init__.py

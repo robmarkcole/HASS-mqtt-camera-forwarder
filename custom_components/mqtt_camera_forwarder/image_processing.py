@@ -34,6 +34,10 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+def pil_image_to_byte_array(image):
+    imgByteArr = io.BytesIO()
+    image.save(imgByteArr, "PNG")
+    return imgByteArr.getvalue()
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up."""
@@ -42,6 +46,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     for camera in config[CONF_SOURCE]:
         entities.append(
             MqttCameraForwarder(
+                mqtt = hass.components.mqtt,
                 mqtt_topic = config.get(CONF_MQTT_TOPIC),
                 camera_entity=camera.get(CONF_ENTITY_ID),
                 name=camera.get(CONF_NAME),
@@ -55,11 +60,13 @@ class MqttCameraForwarder(ImageProcessingEntity):
 
     def __init__(
         self,
+        mqtt,
         mqtt_topic,
         camera_entity,
         name=None,
     ):
         """Init with the client."""
+        self._mqtt = mqtt
         self._mqtt_topic = mqtt_topic
         self._camera_entity = camera_entity
         if name:  # Since name is optional.
@@ -71,7 +78,9 @@ class MqttCameraForwarder(ImageProcessingEntity):
 
     def process_image(self, image):
         """Process an image."""
-        self._image = Image.open(io.BytesIO(bytearray(image)))  # used for saving only
+        pil_image = Image.open(io.BytesIO(bytearray(image)))
+        byte_array = pil_image_to_byte_array(pil_image)
+        self._mqtt.publish(self._mqtt_topic, byte_array)
 
     @property
     def camera_entity(self):
