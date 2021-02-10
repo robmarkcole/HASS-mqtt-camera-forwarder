@@ -20,6 +20,7 @@ from homeassistant.components.image_processing import (
 )
 
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_NAME
+from homeassistant.core import split_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     for camera in config[CONF_SOURCE]:
         entities.append(
             MqttCameraForwarder(
-                mqtt_topic = config.get(CONF_MQTT_TOPIC)
+                mqtt_topic = config.get(CONF_MQTT_TOPIC),
                 camera_entity=camera.get(CONF_ENTITY_ID),
                 name=camera.get(CONF_NAME),
             )
@@ -65,7 +66,7 @@ class MqttCameraForwarder(ImageProcessingEntity):
             self._name = name
         else:
             entity_name = split_entity_id(camera_entity)[1]
-            self._name = f"rekognition_{entity_name}"
+            self._name = f"mqtt_camera_forwarder_{entity_name}"
         self._state = None # will count the number of frames published?
 
     def process_image(self, image):
