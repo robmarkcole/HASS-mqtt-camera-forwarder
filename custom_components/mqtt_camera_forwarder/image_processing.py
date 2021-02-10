@@ -5,8 +5,6 @@ from collections import namedtuple, Counter
 import io
 import logging
 
-from PIL import Image
-
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 import voluptuous as vol
@@ -34,11 +32,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_MQTT_TOPIC, default=DEFAULT_MQTT_TOPIC): cv.string,
     }
 )
-
-def pil_image_to_byte_array(image):
-    imgByteArr = io.BytesIO()
-    image.save(imgByteArr, "PNG")
-    return imgByteArr.getvalue()
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up."""
@@ -79,10 +72,7 @@ class MqttCameraForwarder(ImageProcessingEntity):
 
     def process_image(self, image):
         """Process an image."""
-        pil_image = Image.open(io.BytesIO(bytearray(image)))
-        byte_array = pil_image_to_byte_array(pil_image)
-        # self._mqtt.async_publish(self._mqtt_topic, byte_array)
-        mqtt.async_publish(self.hass, self._mqtt_topic, byte_array, qos=MQTT_QOS, retain=False)
+        mqtt.async_publish(self.hass, self._mqtt_topic, bytearray(image), qos=MQTT_QOS, retain=False)
 
     @property
     def camera_entity(self):

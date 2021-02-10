@@ -3,9 +3,6 @@
         "name": "MQTT camera forwarder custom integration",
         "documentation": "https://github.com/robmarkcole/HASS-mqtt-camera-forwarder",
         "version": "0.1.0",
-        "requirements": [
-                "pillow"
-        ],
         "codeowners": [
                 "@robmarkcole"
         ]
