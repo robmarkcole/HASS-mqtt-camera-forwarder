@@ -18,7 +18,7 @@ from homeassistant.components.image_processing import (
     PLATFORM_SCHEMA,
     ImageProcessingEntity,
 )
-
+from homeassistant.components import mqtt
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_NAME
 from homeassistant.core import split_entity_id
 
@@ -27,6 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 EVENT_FRAME_SENT = "mqtt_camera_forwarder.frame_sent"
 CONF_MQTT_TOPIC = "mqtt_topic"
 DEFAULT_MQTT_TOPIC = "hass_camera"
+MQTT_QOS = 0
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -46,7 +47,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     for camera in config[CONF_SOURCE]:
         entities.append(
             MqttCameraForwarder(
-                mqtt = hass.components.mqtt,
+                hass,
                 mqtt_topic = config.get(CONF_MQTT_TOPIC),
                 camera_entity=camera.get(CONF_ENTITY_ID),
                 name=camera.get(CONF_NAME),
@@ -60,13 +61,13 @@ class MqttCameraForwarder(ImageProcessingEntity):
 
     def __init__(
         self,
-        mqtt,
+        hass,
         mqtt_topic,
         camera_entity,
         name=None,
     ):
         """Init with the client."""
-        self._mqtt = mqtt
+        self._hass = hass
         self._mqtt_topic = mqtt_topic
         self._camera_entity = camera_entity
         if name:  # Since name is optional.
@@ -80,7 +81,8 @@ class MqttCameraForwarder(ImageProcessingEntity):
         """Process an image."""
         pil_image = Image.open(io.BytesIO(bytearray(image)))
         byte_array = pil_image_to_byte_array(pil_image)
-        self._mqtt.publish(self._mqtt_topic, byte_array)
+        # self._mqtt.async_publish(self._mqtt_topic, byte_array)
+        mqtt.async_publish(self.hass, self._mqtt_topic, byte_array, qos=MQTT_QOS, retain=False)
 
     @property
     def camera_entity(self):
